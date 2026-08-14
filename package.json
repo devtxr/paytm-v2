@@ -1,0 +1,16 @@
+{
+  "name": "paytm-verifier",
+  "version": "1.0.0",
+  "description": "Paytm merchant payment verifier — Cloudflare Worker (MID + Order ID only, no merchant key)",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "node-html-parser": "^9.0.1"
+  }
+}
