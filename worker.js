@@ -134,13 +134,17 @@ async function handleGenerateQR(request) {
     );
   }
 
+  if (!order_id) {
+    order_id = "ORD_" + Date.now() + "_" + Math.floor(1000 + Math.random() * 9000);
+  }
+
   // Build UPI URI
   // upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&tr=ORDER_ID&cu=INR&tn=NOTE
   const params = new URLSearchParams();
   params.append("pa", upi_id);
   params.append("pn", name);
   if (amount) params.append("am", amount);
-  if (order_id) params.append("tr", order_id);
+  params.append("tr", order_id);
   params.append("cu", "INR");
   if (note) params.append("tn", note);
 
@@ -151,6 +155,7 @@ async function handleGenerateQR(request) {
 
   return jsonResponse({
     status: "success",
+    order_id: order_id,
     upi_uri: upi_uri,
     qr_url: qr_url
   }, 200);
@@ -469,38 +474,39 @@ function renderTestPage() {
   <div class="card">
     <div class="row">
       <div class="field">
-        <label for="upi_id">UPI ID</label>
+        <label for="upi_id">UPI ID (VPA)</label>
         <input id="upi_id" placeholder="e.g. merchant@paytm" autocomplete="off"/>
       </div>
       <div class="field">
-        <label for="amount">Amount (optional)</label>
+        <label for="amount">Amount (INR)</label>
         <input id="amount" placeholder="e.g. 100.50" autocomplete="off"/>
       </div>
     </div>
     <div class="row">
       <div class="field">
-        <label for="qr_orderid">Order ID (Auto-generated if empty)</label>
-        <input id="qr_orderid" placeholder="Leave empty for unique ID" autocomplete="off"/>
+        <label for="qr_orderid">Order ID (Leave empty for random generation)</label>
+        <input id="qr_orderid" placeholder="Auto-generated if left empty" autocomplete="off"/>
       </div>
       <div class="field">
-        <label for="qr_note">Note (optional)</label>
-        <input id="qr_note" placeholder="e.g. Payment for shoes" autocomplete="off"/>
+        <label for="qr_note">Note / Remarks (optional)</label>
+        <input id="qr_note" placeholder="e.g. Payment for order" autocomplete="off"/>
       </div>
     </div>
     <div class="row">
       <div class="field">
-        <label for="qr_mid">Merchant ID (for Auto-Verify)</label>
-        <input id="qr_mid" placeholder="Enter MID to start live polling" autocomplete="off"/>
+        <label for="qr_mid">Merchant ID (MID) for Auto-Verify</label>
+        <input id="qr_mid" placeholder="Enter Paytm MID to enable Auto-Verify" autocomplete="off"/>
       </div>
       <div class="field" style="display:flex;align-items:flex-end;">
         <div class="actions" style="width:100%;justify-content:flex-end;">
-          <button id="generateBtn">Generate QR</button>
+          <button id="generateBtn">Generate QR & Auto-Verify</button>
           <button class="ghost" id="clearQrBtn" type="button">Clear</button>
         </div>
       </div>
     </div>
 
     <div id="qr_result" class="result" style="display:none; text-align: center;">
+      <div id="auto_verify_status" style="margin-bottom: 12px; font-weight: bold;"></div>
       <img id="qr_image" src="" alt="QR Code" style="max-width: 250px; border-radius: 8px; margin-bottom: 12px; display: none;" />
       <pre id="qr_output" style="text-align: left;"></pre>
     </div>
@@ -509,61 +515,125 @@ function renderTestPage() {
   <div class="divider"></div>
 
   <div class="docs">
-    <h3>// API Usage & Integration Guide</h3>
-    <pre>
-// ==========================================
-// FULL INTEGRATION: GENERATE QR & AUTO-VERIFY
-// Apni website pe is code ko use karein:
-// ==========================================
+    <h3>// Telegram Bot & Website Integration Guide</h3>
 
+    <p class="sub"><strong>1. Telegram Bot (Python - telebot / python-telegram-bot):</strong></p>
+    <pre>
+import requests
+import time
+
+# STEP 1: Generate QR Code
+api_url = "https://your-worker.workers.dev/api/generate-qr"
+payload = {
+    "upi_id": "your-upi@paytm",
+    "amount": "100.00",
+    # order_id empty choor sakte ho, auto random generate ho jayega!
+}
+res = requests.post(api_url, json=payload).json()
+order_id = res['order_id']
+qr_url = res['qr_url']
+
+# Send QR photo to Telegram user
+bot.send_photo(chat_id, photo=qr_url, caption=f"Please pay ₹100.\nOrder ID: {order_id}\nChecking payment status...")
+
+# STEP 2: Auto Verify Payment Loop
+mid = "YOUR_PAYTM_MID"
+verified = False
+for _ in range(30):  # Check for 2 minutes (30 * 4 sec)
+    time.sleep(4)
+    check = requests.post("https://your-worker.workers.dev/api/verify", json={
+        "mid": mid,
+        "order_id": order_id,
+        "env": "prod"
+    }).json()
+
+    if check.get("status") == "success" and check.get("verified"):
+        verified = True
+        bot.send_message(chat_id, "✅ Payment Verified Successfully!")
+        break
+
+if not verified:
+    bot.send_message(chat_id, "❌ Payment timed out or not received.")
+</pre>
+
+    <p class="sub"><strong>2. Telegram Bot (Node.js - node-telegram-bot-api / telegraf):</strong></p>
+    <pre>
+const axios = require('axios');
+
+async function handlePayment(bot, chatId) {
+  const MID = "YOUR_PAYTM_MID";
+
+  // 1. Generate QR Code
+  const qrRes = await axios.post('https://your-worker.workers.dev/api/generate-qr', {
+    upi_id: 'merchant@paytm',
+    amount: '100.00'
+  });
+  const { order_id, qr_url } = qrRes.data;
+
+  await bot.sendPhoto(chatId, qr_url, { caption: "Scan to Pay ₹100\nOrder ID: " + order_id });
+
+  // 2. Auto Verify Payment Polling
+  const poll = setInterval(async () => {
+    try {
+      const verifyRes = await axios.post('https://your-worker.workers.dev/api/verify', {
+        mid: MID,
+        order_id: order_id,
+        env: 'prod'
+      });
+
+      if (verifyRes.data.status === 'success' && verifyRes.data.verified) {
+        clearInterval(poll);
+        bot.sendMessage(chatId, "✅ Payment Received! Order ID: " + order_id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, 4000);
+}
+</pre>
+
+    <p class="sub"><strong>3. Website Integration (JavaScript):</strong></p>
+    <pre>
 async function startPayment() {
   const MID = "YOUR_PAYTM_MID";
-  const ORDER_ID = "ORD_" + Date.now(); // Unique order ID
   const UPI_ID = "merchant@paytm";
   const AMOUNT = "100.00";
 
-  // STEP 1: Generate QR Code
-  const qrRes = await fetch('/api/generate-qr', {
+  // STEP 1: Generate QR Code (Random order_id auto-created)
+  const qrRes = await fetch('https://your-worker.workers.dev/api/generate-qr', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      upi_id: UPI_ID,
-      amount: AMOUNT,
-      order_id: ORDER_ID
-    })
+    body: JSON.stringify({ upi_id: UPI_ID, amount: AMOUNT })
   });
   
   const qrData = await qrRes.json();
   
   if (qrData.status === 'success') {
-    // Show QR on your website
-    document.getElementById('my-qr-image').src = qrData.qr_url;
-    console.log("Please scan the QR to pay!");
+    document.getElementById('qr-img').src = qrData.qr_url;
+    const order_id = qrData.order_id;
     
-    // STEP 2: Start Auto-Polling (Verify)
+    // STEP 2: Auto-Polling (Verify)
     let pollInterval = setInterval(async () => {
       try {
-        const verifyRes = await fetch('/api/verify', {
+        const verifyRes = await fetch('https://your-worker.workers.dev/api/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mid: MID, order_id: ORDER_ID, env: "prod" })
+          body: JSON.stringify({ mid: MID, order_id: order_id, env: "prod" })
         });
         
         const verifyData = await verifyRes.json();
-        
         if (verifyData.status === 'success' && verifyData.verified) {
-          clearInterval(pollInterval); // Stop checking
+          clearInterval(pollInterval);
           alert('✅ Payment Successful!');
-          // Redirect user or update UI
         }
       } catch (err) {
-         console.error("Polling error, will retry...");
+         console.error("Polling error...");
       }
-    }, 4000); // Check every 4 seconds
+    }, 4000);
   }
 }
 </pre>
-    <p class="hint">CORS is fully enabled. Aap is JS snippet ko seedha apne frontend (React, HTML, Vue) me copy-paste karke endpoint integrate kar sakte hain.</p>
+    <p class="hint">CORS is fully enabled. Aap in snippets ko Telegram Bot ya apni Website me copy-paste karke directly use kar sakte hain.</p>
   </div>
 
   <footer>Deployed on Cloudflare Workers · <span id="host"></span></footer>
@@ -590,12 +660,15 @@ async function startPayment() {
   const qrResultBox = $('qr_result');
   const qrOutput = $('qr_output');
   const qrImage = $('qr_image');
+  const autoVerifyStatus = $('auto_verify_status');
 
   $('clearQrBtn').addEventListener('click', () => {
     $('upi_id').value = ''; $('amount').value = '';
-    $('qr_orderid').value = ''; $('qr_note').value = '';
+    $('qr_orderid').value = ''; $('qr_note').value = ''; $('qr_mid').value = '';
     qrResultBox.style.display = 'none'; qrOutput.textContent = '';
     qrImage.style.display = 'none'; qrImage.src = '';
+    autoVerifyStatus.textContent = '';
+    if (pollInterval) clearInterval(pollInterval);
   });
 
   let pollInterval;
@@ -608,22 +681,19 @@ async function startPayment() {
     const mid = $('qr_mid').value.trim();
     const env = $('env').value;
 
-    if (!order_id) {
-        order_id = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
-        $('qr_orderid').value = order_id; // Auto fill the UI
-    }
-    
     // Clear old intervals
     if (pollInterval) clearInterval(pollInterval);
 
     if (!upi_id) {
       qrResultBox.style.display = 'block';
+      autoVerifyStatus.textContent = '';
       qrOutput.textContent = 'UPI ID is required.';
       qrImage.style.display = 'none';
       return;
     }
 
     qrResultBox.style.display = 'block';
+    autoVerifyStatus.textContent = '';
     qrOutput.textContent = 'Generating QR...';
     qrImage.style.display = 'none';
 
@@ -631,16 +701,23 @@ async function startPayment() {
       const res = await fetch('/api/generate-qr', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ upi_id, amount, order_id, note })
+        body: JSON.stringify({ upi_id, amount, order_id: order_id || undefined, note })
       });
       const json = await res.json();
       qrOutput.textContent = JSON.stringify(json, null, 2);
+
       if (json.status === 'success' && json.qr_url) {
         qrImage.src = json.qr_url;
         qrImage.style.display = 'inline-block';
-        
+        if (json.order_id) {
+          $('qr_orderid').value = json.order_id;
+          order_id = json.order_id;
+        }
+
         if (mid) {
-           qrOutput.textContent += '\\n\\n[Auto-Verify Active] Waiting for payment...';
+           autoVerifyStatus.style.color = 'var(--accent-2)';
+           autoVerifyStatus.textContent = '⏳ [Auto-Verify Active] Waiting for payment (Polling every 4 sec)...';
+
            pollInterval = setInterval(async () => {
              try {
                 const checkRes = await fetch('/api/verify', {
@@ -651,14 +728,17 @@ async function startPayment() {
                 const checkJson = await checkRes.json();
                 if (checkJson.status === 'success' && checkJson.verified) {
                    clearInterval(pollInterval);
+                   autoVerifyStatus.style.color = 'var(--success)';
+                   autoVerifyStatus.textContent = '✅ PAYMENT VERIFIED SUCCESSFULLY!';
                    qrOutput.textContent = '✅ PAYMENT SUCCESSFUL!\\n\\n' + JSON.stringify(checkJson.data, null, 2);
-                   qrResultBox.style.backgroundColor = 'rgba(63, 185, 80, 0.1)';
-                   qrResultBox.style.border = '1px solid var(--success)';
                 }
              } catch(err) {
                 // Silently ignore poll errors to keep retrying
              }
            }, 4000); // Check every 4 seconds
+        } else {
+           autoVerifyStatus.style.color = 'var(--muted)';
+           autoVerifyStatus.textContent = 'ℹ️ Enter Merchant ID (MID) above to enable Auto-Verify.';
         }
       }
     } catch (e) {
