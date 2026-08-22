@@ -6,7 +6,7 @@
  *  1. QR Code Generation with auto-generated random Order ID if empty.
  *  2. Paytm Payment Verification via /order/status with self-computed SHA-256 checksum (No Merchant Key needed).
  *  3. Integrated Telegram Bot Webhook Handler (Set webhook to index.php?bot_token=YOUR_TOKEN&mid=YOUR_MID&upi_id=YOUR_UPI).
- *  4. HTML Web UI for live testing & auto-verification polling.
+ *  4. HTML Web UI for live testing & auto-verification polling & step-by-step API integration guides.
  */
 
 // Enable CORS
@@ -150,7 +150,7 @@ if (!empty($bot_token) || $action === 'telegram_webhook') {
             $qrUrl = $qrData['qr_url'];
 
             // Send QR Photo
-            $caption = "₹{$amount} Pay karein.\nOrder ID: {$orderId}\n\nPayment status automatically check ho raha hai...";
+            $caption = "Scan & Pay ₹{$amount}\nOrder ID: {$orderId}\n\nPayment status auto-verify ho raha hai...";
             file_get_contents("https://api.telegram.org/bot{$bot_token}/sendPhoto?chat_id={$chatId}&photo=" . urlencode($qrUrl) . "&caption=" . urlencode($caption));
 
             // Auto-Verify Polling loop in Telegram Handler
@@ -305,7 +305,7 @@ if ($action === 'health' || strpos($path, '/api/health') !== false) {
   }
   .divider{height:1px;background:var(--border);margin:28px 0;}
   .docs h3{font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:0 0 10px;}
-  .docs pre{margin-top:0;}
+  .docs pre{margin-top:6px;}
   footer{color:var(--muted);font-size:11.5px;margin-top:28px;text-align:center;}
 </style>
 </head>
@@ -394,14 +394,48 @@ if ($action === 'health' || strpos($path, '/api/health') !== false) {
   </div>
 
   <div class="card docs">
-    <h3>🤖 Telegram Bot Integration Setup</h3>
-    <p class="sub">
-      Aap is single <code>index.php</code> file ko apne Telegram Bot ka Webhook URL set kar sakte hain:
-    </p>
+    <h2>3. How Integration Works (Integration Guide)</h2>
+    <p class="sub">Aap is API ko apne Telegram Bot aur Website me bina kisi complex setup ke asani se integrate kar sakte hain:</p>
+
+    <h3>🤖 Option A: Telegram Bot Integration (No code required)</h3>
+    <p class="hint">Aap apne Bot Father se Bot Token lekar, direct browser me is Webhook URL ko hit karein:</p>
     <pre>
 https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/setWebhook?url=https://YOUR_DOMAIN/index.php?bot_token=&lt;YOUR_BOT_TOKEN&gt;&mid=&lt;YOUR_PAYTM_MID&gt;&upi_id=&lt;YOUR_UPI_ID&gt;&amount=100.00
 </pre>
-    <p class="hint">Bot me <code>/start</code> ya <code>/pay</code> likhne par user ko QR Code chala jayega aur auto-verification start ho jayegi.</p>
+    <p class="hint">Jab bhi koi user aapke Telegram bot me <code>/start</code> ya <code>/pay</code> kahega, bot usko random Order ID waala QR code bhejega aur background me Paytm status check karke success message bhej dega!</p>
+
+    <div class="divider"></div>
+
+    <h3>🌐 Option B: Website Integration (HTML + JS)</h3>
+    <p class="hint">Apni website par user ko QR dikha kar auto-verify karne ke liye bas is JavaScript code ko use karein:</p>
+    <pre>
+// STEP 1: QR Code Generate Karein
+const res = await fetch('https://YOUR_DOMAIN/index.php?action=generate_qr', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ upi_id: 'merchant@paytm', amount: '100.00' })
+});
+const qr = await res.json();
+
+// Show QR Code image to user
+document.getElementById('my-qr-img').src = qr.qr_url;
+const orderId = qr.order_id; // Random generated Order ID
+
+// STEP 2: Payment Auto-Verify Loop (Har 4 second par check)
+const interval = setInterval(async () => {
+  const vRes = await fetch('https://YOUR_DOMAIN/index.php?action=verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mid: 'YOUR_PAYTM_MID', order_id: orderId })
+  });
+  const vData = await vRes.json();
+
+  if (vData.status === 'success' && vData.verified) {
+    clearInterval(interval);
+    alert('✅ Payment Received Successfully!');
+  }
+}, 4000);
+</pre>
   </div>
 
   <footer>Single-File PHP Solution</footer>

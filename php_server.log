@@ -1,7 +1,7 @@
-[Sat Aug 22 15:48:13 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Sat Aug 22 15:48:16 2026] [::1]:36804 Accepted
-[Sat Aug 22 15:48:16 2026] [::1]:36804 [200]: GET /index.php
-[Sat Aug 22 15:48:16 2026] [::1]:36804 Closing
-[Sat Aug 22 15:48:19 2026] [::1]:36806 Accepted
-[Sat Aug 22 15:48:19 2026] [::1]:36806 [200]: POST /index.php?action=generate_qr
-[Sat Aug 22 15:48:19 2026] [::1]:36806 Closing
+[Sat Aug 22 17:17:05 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Sat Aug 22 17:17:07 2026] [::1]:35108 Accepted
+[Sat Aug 22 17:17:07 2026] [::1]:35108 [200]: GET /index.php?action=generate_qr&upi_id=test@paytm&amount=50
+[Sat Aug 22 17:17:07 2026] [::1]:35108 Closing
+[Sat Aug 22 17:17:07 2026] [::1]:35110 Accepted
+[Sat Aug 22 17:17:07 2026] [::1]:35110 [200]: GET /index.php
+[Sat Aug 22 17:17:07 2026] [::1]:35110 Closing
