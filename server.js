@@ -35,8 +35,10 @@ const server = http.createServer(async (req, res) => {
             text: async () => body
         };
 
-        // We need to inject node-fetch for the worker's internal fetch
-        global.fetch = require('node-fetch');
+        // Ensure global fetch is available
+        if (typeof global.fetch === 'undefined') {
+            global.fetch = globalThis.fetch;
+        }
 
         try {
             const workerRes = await workerCode.fetch(workerReq);
