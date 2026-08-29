@@ -1,0 +1,8 @@
+# Prevent direct access to state and log files
+<FilesMatch "^(state\.json|telepulse\.log|config\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Enable directory index
+DirectoryIndex index.php
