@@ -1,0 +1,70 @@
+========================================================================
+       TELEPULSE - TELEGRAM UPTIME & MEMBER MONITORING SUITE
+                     cPanel Setup & Deployment Guide
+========================================================================
+
+Overview:
+TelePulse is a lightweight, standalone PHP application designed for
+cPanel Shared or VPS hosting. It monitors Telegram channels, bots,
+webhooks, and Mini Apps 24/7 with real-time incident alerts and member
+join/leave tracking.
+
+------------------------------------------------------------------------
+STEP 1: UPLOAD FILES TO CPANEL
+------------------------------------------------------------------------
+1. Log in to your cPanel control panel.
+2. Open File Manager and navigate to `public_html/`.
+3. Create a new folder named `telepulse` (or host directly in public_html).
+4. Upload all files into `public_html/telepulse/`:
+   - index.php
+   - config.php
+   - functions.php
+   - cron.php
+   - webhook.php
+   - .htaccess
+
+------------------------------------------------------------------------
+STEP 2: EDIT CONFIGURATION (config.php)
+------------------------------------------------------------------------
+1. Open `config.php` in cPanel Code Editor.
+2. Set your Telegram Bot Token from @BotFather:
+   'bot_token' => 'YOUR_TELEGRAM_BOT_TOKEN'
+3. Set your Admin Chat ID to receive alerts:
+   'chat_id' => 'YOUR_ADMIN_CHAT_ID'
+
+------------------------------------------------------------------------
+STEP 3: SET UP CPANEL CRON JOB
+------------------------------------------------------------------------
+1. In cPanel, search for 'Cron Jobs'.
+2. Select Common Settings: 'Once Per Minute (* * * * *)'.
+3. Enter the command below (replace USERNAME with your cPanel username):
+
+   /usr/local/bin/php /home/USERNAME/public_html/telepulse/index.php --cron >/dev/null 2>&1
+
+------------------------------------------------------------------------
+STEP 4: SET TELEGRAM BOT WEBHOOK
+------------------------------------------------------------------------
+Open this URL in your web browser:
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://YOUR-DOMAIN.com/telepulse/index.php
+
+------------------------------------------------------------------------
+STEP 5: ADD BOT AS ADMIN IN YOUR CHANNEL / GROUP
+------------------------------------------------------------------------
+1. Open your Telegram Channel or Group Settings -> Administrators.
+2. Add your Bot as Administrator with 'Post Messages' & 'Invite Users' rights.
+3. You will now get real-time Telegram alerts when members join or leave!
+
+------------------------------------------------------------------------
+BOT COMMANDS:
+------------------------------------------------------------------------
+/status             - Live status of all targets
+/stats              - System health & uptime statistics
+/problems           - Recent downtime & error incident logs
+/check @handle      - Instant diagnostic probe
+/add Name | type | target - Add new target monitor
+/del <mon-id>       - Remove target monitor
+/members            - View user join/leave activity
+/ping               - Trigger instant monitoring cycle
+/help               - Interactive help menu
+
+========================================================================

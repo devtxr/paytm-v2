@@ -1,0 +1,220 @@
+{
+    "monitors": [
+        {
+            "id": "mon-1",
+            "name": "Telegram News Channel (@telegram)",
+            "type": "telegram_channel",
+            "target": "telegram",
+            "interval": 60,
+            "timeout": 8,
+            "status": "UP",
+            "last_check": "2026-08-29 07:40:58",
+            "last_response_time": 385,
+            "consecutive_fails": 0,
+            "enabled": true,
+            "total_checks": 2,
+            "successful_checks": 2,
+            "uptime_pct": 100,
+            "history": [
+                {
+                    "status": "UP",
+                    "latency": 385,
+                    "time": "07:40:58"
+                },
+                {
+                    "status": "UP",
+                    "latency": 393,
+                    "time": "07:39:08"
+                }
+            ],
+            "last_http_code": 200,
+            "last_error": "OK"
+        },
+        {
+            "id": "mon-2",
+            "name": "Durov's Channel (@durov)",
+            "type": "telegram_channel",
+            "target": "durov",
+            "interval": 60,
+            "timeout": 8,
+            "status": "UP",
+            "last_check": "2026-08-29 07:40:58",
+            "last_response_time": 376,
+            "consecutive_fails": 0,
+            "enabled": true,
+            "total_checks": 2,
+            "successful_checks": 2,
+            "uptime_pct": 100,
+            "history": [
+                {
+                    "status": "UP",
+                    "latency": 376,
+                    "time": "07:40:58"
+                },
+                {
+                    "status": "UP",
+                    "latency": 378,
+                    "time": "07:39:09"
+                }
+            ],
+            "last_http_code": 200,
+            "last_error": "OK"
+        },
+        {
+            "id": "mon-3",
+            "name": "BotFather Health Check (@BotFather)",
+            "type": "telegram_bot",
+            "target": "BotFather",
+            "interval": 30,
+            "timeout": 8,
+            "status": "UP",
+            "last_check": "2026-08-29 07:40:58",
+            "last_response_time": 344,
+            "consecutive_fails": 0,
+            "enabled": true,
+            "total_checks": 2,
+            "successful_checks": 2,
+            "uptime_pct": 100,
+            "history": [
+                {
+                    "status": "UP",
+                    "latency": 344,
+                    "time": "07:40:58"
+                },
+                {
+                    "status": "UP",
+                    "latency": 345,
+                    "time": "07:39:09"
+                }
+            ],
+            "last_http_code": 200,
+            "last_error": "OK"
+        },
+        {
+            "id": "mon-4",
+            "name": "Community Support Bot Webhook",
+            "type": "telegram_webhook",
+            "target": "https:\/\/api.telegram.org\/bot-status-probe",
+            "interval": 60,
+            "timeout": 8,
+            "status": "DOWN",
+            "last_check": "2026-08-29 07:40:59",
+            "last_response_time": 342,
+            "consecutive_fails": 2,
+            "enabled": true,
+            "total_checks": 2,
+            "successful_checks": 0,
+            "uptime_pct": 0,
+            "history": [
+                {
+                    "status": "DOWN",
+                    "latency": 342,
+                    "time": "07:40:59"
+                },
+                {
+                    "status": "DOWN",
+                    "latency": 348,
+                    "time": "07:39:09"
+                }
+            ],
+            "last_http_code": 404,
+            "last_error": "HTTP Status 404",
+            "downtime_start": "2026-08-29 07:39:09"
+        },
+        {
+            "id": "mon-5",
+            "name": "Telegram Mini App Showcase",
+            "type": "telegram_miniapp",
+            "target": "https:\/\/t.me\/wallet",
+            "interval": 120,
+            "timeout": 8,
+            "status": "UP",
+            "last_check": "2026-08-29 07:40:59",
+            "last_response_time": 376,
+            "consecutive_fails": 0,
+            "enabled": true,
+            "total_checks": 2,
+            "successful_checks": 2,
+            "uptime_pct": 100,
+            "history": [
+                {
+                    "status": "UP",
+                    "latency": 376,
+                    "time": "07:40:59"
+                },
+                {
+                    "status": "UP",
+                    "latency": 375,
+                    "time": "07:39:10"
+                }
+            ],
+            "last_http_code": 200,
+            "last_error": "OK"
+        },
+        {
+            "id": "mon-1787989150-885",
+            "name": "Test Channel",
+            "type": "telegram_channel",
+            "target": "telegram",
+            "interval": 60,
+            "timeout": 8,
+            "status": "UP",
+            "enabled": true,
+            "last_check": "2026-08-29 07:41:00",
+            "last_response_time": 376,
+            "consecutive_fails": 0,
+            "total_checks": 1,
+            "successful_checks": 1,
+            "uptime_pct": 100,
+            "history": [
+                {
+                    "status": "UP",
+                    "latency": 376,
+                    "time": "07:41:00"
+                }
+            ],
+            "last_http_code": 200,
+            "last_error": "OK"
+        },
+        {
+            "id": "mon-1787989310-460",
+            "name": "Official News Channel",
+            "type": "telegram_channel",
+            "target": "telegram",
+            "interval": 60,
+            "timeout": 8,
+            "status": "UNKNOWN",
+            "enabled": true,
+            "last_check": null,
+            "last_response_time": 0,
+            "consecutive_fails": 0,
+            "total_checks": 0,
+            "successful_checks": 0,
+            "uptime_pct": 100,
+            "history": []
+        }
+    ],
+    "history": [],
+    "problems": [
+        {
+            "type": "DOWNTIME_OUTAGE",
+            "monitor": "Community Support Bot Webhook",
+            "target": "https:\/\/api.telegram.org\/bot-status-probe",
+            "error": "HTTP Status 404",
+            "http_code": 404,
+            "latency": 342,
+            "time": "2026-08-29 07:40:59 UTC"
+        },
+        {
+            "type": "DOWNTIME_OUTAGE",
+            "monitor": "Community Support Bot Webhook",
+            "target": "https:\/\/api.telegram.org\/bot-status-probe",
+            "error": "HTTP Status 404",
+            "http_code": 404,
+            "latency": 348,
+            "time": "2026-08-29 07:39:09 UTC"
+        }
+    ],
+    "member_events": [],
+    "last_run": 1787989257
+}

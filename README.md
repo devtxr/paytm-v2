@@ -1,113 +1,87 @@
-# Paytm Merchant Payment Verifier — Cloudflare Worker
+# TelePulse - Telegram Channel, Bot & Uptime Suite (cPanel Edition)
 
-Ek single-file Cloudflare Worker jo Paytm ke `/order/status` API se
-payment verify karta hai — **sirf MID + Order ID** se, bina merchant key ke.
+TelePulse is a lightweight, standalone PHP application designed specifically for **cPanel Shared/VPS Hosting**. It provides 24/7 uptime monitoring for Telegram Channels, Bots, Webhooks, and Mini Apps with real-time incident alerts, user join/leave tracking, and an interactive Telegram Bot.
 
-## Files
+---
 
-- `worker.js` — pura worker code (UI + API dono isi me hai)
-- `wrangler.toml` — deploy config
+## 🌟 Features
 
-## Endpoints
+- **24/7 Health Monitoring:** Checks Telegram Channels, Bots, Webhook endpoints, and Mini Apps via cURL probes.
+- **Modern Glassmorphism Web UI:** Beautiful dark theme dashboard built with Tailwind CSS & FontAwesome.
+- **Dynamic Target Management:** Add or delete monitoring targets directly from the Web UI or via Telegram Bot commands.
+- **Telegram Alert Engine:** Instant notifications for service downtime, latency spikes, and HTTP errors.
+- **Member Activity Tracker:** Instant alerts on Telegram when users join or leave your channel or group.
+- **Interactive Bot Commands:** Control the system directly via `/status`, `/stats`, `/problems`, `/check`, `/add`, `/del`, `/members`, `/ping`, `/help`.
+- **Zero Database Required:** Stores all data cleanly in lightweight `state.json`.
 
-| Method | Path            | Description                            |
-| ------ | --------------- | -------------------------------------- |
-| GET    | `/`             | HTML test page (MID/OrderID form)      |
-| GET    | `/api/verify`   | `?mid=&order_id=&env=prod\|stage`       |
-| POST   | `/api/verify`   | JSON `{mid, order_id, env}`            |
-| GET    | `/api/generate-qr` | `?upi_id=&amount=&order_id=` |
-| POST   | `/api/generate-qr` | JSON `{upi_id, amount, order_id, name, note}` |
-| GET    | `/api/health`   | Health check                           |
+---
 
-CORS enabled (`*`) — kisi bhi website ya app se call kar sakte ho.
+## 📁 Package Structure
 
-## Deploy karne ke 2 tareeke
+- `index.php` — Main web dashboard & AJAX API router.
+- `config.php` — Bot token, Chat ID, and default target settings.
+- `functions.php` — Core cURL probing engine, state manager, and Telegram webhook handler.
+- `cron.php` — Lightweight CLI cron script for scheduled monitoring cycles.
+- `webhook.php` — Dedicated Telegram Webhook entry point.
+- `.htaccess` — Security rules to protect logs and state file.
+- `SETUP_GUIDE.txt` — Plain text setup walkthrough for cPanel.
 
-### Method 1 — Cloudflare Dashboard (bina CLI ke, sabse easy)
+---
 
-1. https://dash.cloudflare.com → Workers & Pages → **Create** → **Create Worker**
-2. Naam do (e.g. `paytm-verifier`) → **Deploy**
-3. **Edit code** → puri file ka default content delete karo
-4. `worker.js` ka pura content paste karo → **Save and deploy**
-5. Aapka URL: `https://paytm-verifier.<your-subdomain>.workers.dev`
+## 🚀 Step-by-Step cPanel Deployment Guide
 
-### Method 2 — Wrangler CLI
+### Step 1: Upload Files to cPanel
+1. Log in to your **cPanel** dashboard.
+2. Open **File Manager** -> Navigate to `public_html/`.
+3. Create a folder named `telepulse`.
+4. Upload all files into `public_html/telepulse/`.
 
-```bash
-npm install -g wrangler
-wrangler login
-cd /path/to/this/folder
-wrangler deploy
+### Step 2: Configure Bot Token & Chat ID
+1. Open `config.php` in File Manager Code Editor.
+2. Update `'bot_token'` with your Telegram Bot Token from `@BotFather`.
+3. Update `'chat_id'` with your Telegram Admin Chat ID.
+
+### Step 3: Set Up cPanel Cron Job (Automatic 24/7 Monitoring)
+1. In cPanel, search for **Cron Jobs**.
+2. Set schedule to **Once Per Minute (`* * * * *`)** or **Every 5 Minutes (`*/5 * * * *`)**.
+3. Add the command:
+   ```bash
+   /usr/local/bin/php /home/YOUR_CPANEL_USERNAME/public_html/telepulse/index.php --cron >/dev/null 2>&1
+   ```
+   *(Replace `YOUR_CPANEL_USERNAME` with your actual cPanel username)*
+
+### Step 4: Connect Telegram Bot Webhook
+To receive member join/leave alerts and use bot commands:
+Open this URL in your web browser:
+```
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://YOUR-DOMAIN.com/telepulse/index.php
 ```
 
-## Usage
+### Step 5: Add Bot as Admin in Channel / Group
+1. Add your bot as an **Administrator** in your Telegram Channel or Group.
+2. Grant permissions for *Post Messages / Invite Users*.
 
-### Browser (test page)
-Bas apna Worker URL kholo — form aa jayega.
+---
 
-### cURL — GET
-```bash
-curl "https://paytm-verifier.<your>.workers.dev/api/verify?mid=YOUR_MID&order_id=YOUR_ORDER&env=prod"
-```
+## 🤖 Telegram Bot Commands
 
-### cURL — POST
-```bash
-curl -X POST "https://paytm-verifier.<your>.workers.dev/api/verify" \
-  -H "Content-Type: application/json" \
-  -d '{"mid":"YOUR_MID","order_id":"YOUR_ORDER","env":"prod"}'
-```
+| Command | Description |
+| ------- | ----------- |
+| `/status` | View live uptime status of all monitored targets |
+| `/stats` | View overall system uptime percentage & latency stats |
+| `/problems` | View recent downtime & error incident logs |
+| `/check @handle` | Run instant diagnostic probe on any handle/URL |
+| `/add Name \| type \| target` | Add a new target monitor dynamically |
+| `/del <monitor_id>` | Remove a target monitor |
+| `/members` | View recent user join/leave activity |
+| `/ping` | Trigger an instant monitoring cycle |
+| `/help` | Display interactive command menu |
 
-### Generate QR — GET
-```bash
-curl "https://paytm-verifier.<your>.workers.dev/api/generate-qr?upi_id=merchant@paytm&amount=100.50&order_id=ORDER123"
-```
+---
 
-### Generate QR — POST
-```bash
-curl -X POST "https://paytm-verifier.<your>.workers.dev/api/generate-qr" \
-  -H "Content-Type: application/json" \
-  -d '{"upi_id":"merchant@paytm","amount":"100.50","order_id":"ORDER123","name":"My Store","note":"Payment for order 123"}'
-```
+## 🔐 Security & Optimization
 
+- **.htaccess Protection:** Blocks public web access to `state.json` and `telepulse.log`.
+- **CORS Enabled:** Supports external API calls if integrated into custom apps.
 
-### JavaScript (from any website)
-```js
-const res = await fetch("https://paytm-verifier.<your>.workers.dev/api/verify", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ mid: "YOUR_MID", order_id: "YOUR_ORDER", env: "prod" })
-});
-const data = await res.json();
-console.log(data.verified, data.data);
-```
-
-## Response format
-
-```json
-{
-  "status": "success",           // "success" | "failed" | "error"
-  "verified": true,
-  "endpoint": "https://securegw.paytm.in/order/status",
-  "data": {
-    "TXNID": "...",
-    "BANKTXNID": "...",
-    "ORDERID": "...",
-    "TXNAMOUNT": "100.00",
-    "STATUS": "TXN_SUCCESS",
-    "RESPCODE": "01",
-    "RESPMSG": "Txn Success",
-    "MID": "...",
-    "...": "..."
-  }
-}
-```
-
-Agar payment nahi hua ya invalid order id ho to `status: "failed"` aa jayega
-Paytm ke error message ke saath.
-
-## Notes
-
-- **No database, no storage** — pure stateless Worker.
-- Multiple users ek hi endpoint use kar sakte hain, sabke apne MID + Order ID ke saath.
-- Environment: `prod` (default) ya `stage` request me pass karo.
-- Worker free tier: 100k requests/day.
+*Created for cPanel Hosting Environments by TelePulse Suite.*
