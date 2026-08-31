@@ -1,51 +1,37 @@
 const http = require('http');
 const workerCode = require('./worker.js').default || require('./worker.js');
 
-// Node polyfills
-global.crypto = {
-    subtle: {
-        digest: async function(algorithm, data) {
-            const crypto = require('crypto');
-            return crypto.createHash('sha256').update(data).digest();
-        }
-    }
-};
-
-class ResponseNode {
-    constructor(body, init) {
-        this.body = body;
-        this.status = init && init.status || 200;
-        this.headers = init && init.headers || {};
-    }
-    async text() { return this.body; }
-    async json() { return JSON.parse(this.body); }
-}
-global.Response = ResponseNode;
-
 const server = http.createServer(async (req, res) => {
     let body = [];
     req.on('data', (chunk) => body.push(chunk));
     req.on('end', async () => {
         body = Buffer.concat(body).toString();
         
-        const workerReq = {
+        const fullUrl = `http://${req.headers.host || 'localhost:3000'}${req.url}`;
+        const options = {
             method: req.method,
-            url: "http://localhost:3000" + req.url,
-            json: async () => JSON.parse(body),
-            text: async () => body
+            headers: req.headers,
         };
+        if (req.method !== 'GET' && req.method !== 'HEAD' && body) {
+            options.body = body;
+        }
 
-        // We need to inject node-fetch for the worker's internal fetch
-        global.fetch = require('node-fetch');
+        const workerReq = new Request(fullUrl, options);
 
         try {
             const workerRes = await workerCode.fetch(workerReq);
-            res.writeHead(workerRes.status, workerRes.headers);
-            res.end(workerRes.body);
+            const headers = {};
+            workerRes.headers.forEach((value, key) => {
+                headers[key] = value;
+            });
+            res.writeHead(workerRes.status, headers);
+            const responseText = await workerRes.text();
+            res.end(responseText);
         } catch (e) {
-            res.writeHead(500);
-            res.end(String(e));
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end(String(e && e.stack ? e.stack : e));
         }
     });
 });
+
 server.listen(3000, () => console.log('Listening on 3000'));

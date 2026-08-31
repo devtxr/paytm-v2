@@ -136,15 +136,16 @@ async function handleGenerateQR(request) {
 
   // Build UPI URI
   // upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&tr=ORDER_ID&cu=INR&tn=NOTE
-  const params = new URLSearchParams();
-  params.append("pa", upi_id);
-  params.append("pn", name);
-  if (amount) params.append("am", amount);
-  if (order_id) params.append("tr", order_id);
-  params.append("cu", "INR");
-  if (note) params.append("tn", note);
+  const queryParts = [
+    `pa=${upi_id}`,
+    `pn=${name}`
+  ];
+  if (amount) queryParts.push(`am=${amount}`);
+  if (order_id) queryParts.push(`tr=${order_id}`);
+  queryParts.push("cu=INR");
+  if (note) queryParts.push(`tn=${note}`);
 
-  const upi_uri = "upi://pay?" + params.toString();
+  const upi_uri = "upi://pay?" + queryParts.join("&");
   
   // URL encode the URI for the QR server
   const qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(upi_uri);
@@ -760,9 +761,9 @@ export default {
         }
 
         const order_id = "ORD_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-        let uri = `upi://pay?pa=${encodeURIComponent(upi_id)}&pn=${encodeURIComponent("Merchant")}&tr=${encodeURIComponent(order_id)}`;
-        if (amount) uri += `&am=${encodeURIComponent(amount)}`;
-        uri += `&tn=${encodeURIComponent("Auto Payment")}`;
+        let uri = `upi://pay?pa=${upi_id}&pn=Merchant&tr=${order_id}`;
+        if (amount) uri += `&am=${amount}`;
+        uri += `&tn=Auto Payment`;
 
         const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(uri);
 
